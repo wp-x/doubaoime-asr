@@ -35,7 +35,7 @@ async def demo_transcribe(audio_data: bytes, config: ASRConfig):
     print()
 
 
-async def demo_transcribe_stream(audio_data: bytes, config: ASRConfig):
+async def demo_transcribe_stream(audio_path: str, config: ASRConfig):
     """
     流式识别 (transcribe_stream)
 
@@ -45,7 +45,7 @@ async def demo_transcribe_stream(audio_data: bytes, config: ASRConfig):
     print("流式识别 (transcribe_stream)")
     print("=" * 50)
 
-    async for response in transcribe_stream(audio_data, config=config, realtime=False):
+    async for response in transcribe_stream(audio_path, config=config, realtime=False):
         match response.type:
             case ResponseType.TASK_STARTED:
                 print("[系统] 任务已启动")
@@ -56,7 +56,11 @@ async def demo_transcribe_stream(audio_data: bytes, config: ASRConfig):
             case ResponseType.INTERIM_RESULT:
                 print(f"[中间] {response.text}")
             case ResponseType.FINAL_RESULT:
-                print(f"[最终] {response.text}")
+                # 获取该段文本的起止时间
+                start_time = response.results[0].start_time if response.results else 'N/A'
+                end_time = response.results[0].end_time if response.results else 'N/A'
+
+                print(f"[最终] ({start_time} ~ {end_time}) {response.text}")
             case ResponseType.SESSION_FINISHED:
                 print("[系统] 会话结束")
             case ResponseType.ERROR:
@@ -76,10 +80,10 @@ async def main():
     # 配置
     config = ASRConfig(credential_path="./credentials.json")
 
-    audio_data = get_audio_data()
+    audio_path = "/mtmp/3.wav"
 
-    await demo_transcribe(audio_data, config)
-    await demo_transcribe_stream(audio_data, config)
+    #await demo_transcribe(audio_data, config)
+    await demo_transcribe_stream(audio_path, config)
 
 
 if __name__ == "__main__":
